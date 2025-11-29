@@ -1,0 +1,5 @@
+scikit-learn==1.4.2
+joblib==1.4.2
+fpdf==1.7.2
+pefile
+lief
