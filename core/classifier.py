@@ -4,6 +4,19 @@ import joblib
 import os
 import json
 from core.utils import shannon_entropy, extract_printable_strings
+from core.behavior_summary import generate_human_readable_summary
+
+def pad_missing_features(vector):
+    """Ensure vector matches model input length."""
+    expected_length = scaler.mean_.shape[0]  # scaler tells exact expected input size
+    current_length = len(vector)
+
+    if current_length < expected_length:
+        vector += [0] * (expected_length - current_length)
+
+    return vector[:expected_length]
+
+
 
 MODEL_PATH = os.path.join(os.path.dirname(__file__), '../models/malware_pipeline.pkl')
 FEATURES_PATH = os.path.join(os.path.dirname(__file__), '../models/primary_features.json')
@@ -57,7 +70,11 @@ def extract_vector(features, file_path):
     imports = features.get("imports", [])
     num_imports = len(imports) if isinstance(imports, list) else 0
 
-    return counts + [file_size, entropy, num_strings, num_imports]
+    vector = counts + [file_size, entropy, num_strings, num_imports]
+    vector = pad_missing_features(vector)
+    return vector
+
+
 
 def predict_family(features, file_path):
     if model is None or scaler is None or label_encoder is None:
@@ -80,3 +97,26 @@ def predict_proba(features, file_path):
     except Exception as e:
         print(f"[!] Probability prediction error: {e}")
         return 0.0
+def analyze_file(features, file_path):
+    """
+    Return a safe, human-readable analysis of a malware sample.
+    """
+    result = {}
+
+    # Predict family and confidence
+    result["predicted_family"] = predict_family(features, file_path)
+    result["confidence"] = predict_proba(features, file_path)
+
+    # Protocol counts (from primary features)
+    result["protocols"] = {k: features.get(k, 0) for k in ["HTTP", "FTP", "SMTP", "DNS"]}
+
+    # Imported functions / APIs
+    result["imports"] = features.get("imports", [])
+
+    # Strings (limit to first 50 for readability)
+    result["strings"] = features.get("strings", [])[:50]
+
+    # Human-readable behavior summary (pseudocode)
+    result["behavior_summary"] = generate_human_readable_summary(features)
+
+    return result

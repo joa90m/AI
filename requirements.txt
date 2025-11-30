@@ -1,9 +1,9 @@
 scikit-learn==1.4.2
 joblib==1.4.2
 fpdf==1.7.2
-pefile==2024.4.12
-lief==0.12.2
-capstone==4.0.2.post1
-pyelftools==0.29
-numpy==1.26.6
-tqdm==4.66.1
+pefile
+lief
+capstone
+pyelftools
+numpy
+tqdm
